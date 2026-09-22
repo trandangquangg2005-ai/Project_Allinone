@@ -1,0 +1,312 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* AIO semantic colours */
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-debt: var(--debt);
+  --color-income-soft: var(--income-soft);
+  --color-expense-soft: var(--expense-soft);
+  --color-debt-soft: var(--debt-soft);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-green: var(--brand-green);
+  --color-canvas: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+ * Palette taken from the logo: trust blue for actions, the logo green for
+ * money coming in, a muted brick for money going out, amber for debts.
+ * Canvas is a cool off-white so white cards read as surfaces.
+ */
+:root {
+  --radius: 0.75rem;
+  --background: #f3f6f8;
+  --foreground: #17212b;
+  --card: #ffffff;
+  --card-foreground: #17212b;
+  --popover: #ffffff;
+  --popover-foreground: #17212b;
+  --primary: #2872b8;
+  --primary-foreground: #ffffff;
+  --secondary: #e8eef3;
+  --secondary-foreground: #17212b;
+  --muted: #edf1f5;
+  --muted-foreground: #5d6b79;
+  --accent: #e6eff8;
+  --accent-foreground: #17212b;
+  --destructive: #c4432f;
+  --border: #e1e7ed;
+  --input: #d3dbe3;
+  --ring: #2872b8;
+
+  --brand-blue: #2f80c8;
+  --brand-green: #2fa37f;
+  --income: #17805f;
+  --income-soft: #e1f3ec;
+  --expense: #c4432f;
+  --expense-soft: #fbe7e2;
+  --debt: #9a6200;
+  --debt-soft: #fbf0da;
+
+  --chart-1: #2f80c8;
+  --chart-2: #2fa37f;
+  --chart-3: #e0795f;
+  --chart-4: #d9a23a;
+  --chart-5: #7b6bd6;
+
+  --sidebar: #fbfcfd;
+  --sidebar-foreground: #17212b;
+  --sidebar-primary: #2872b8;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e9f0f7;
+  --sidebar-accent-foreground: #17212b;
+  --sidebar-border: #e1e7ed;
+  --sidebar-ring: #2872b8;
+
+  --swatch-blue: #2f7fc6;
+  --swatch-blue-soft: #e4eff9;
+  --swatch-green: #1f8f6a;
+  --swatch-green-soft: #e1f3ec;
+  --swatch-teal: #16808a;
+  --swatch-teal-soft: #ddf1f2;
+  --swatch-amber: #a56a08;
+  --swatch-amber-soft: #fbf0da;
+  --swatch-coral: #c8503a;
+  --swatch-coral-soft: #fbe7e2;
+  --swatch-violet: #6a55c8;
+  --swatch-violet-soft: #ece8fa;
+  --swatch-pink: #b8487a;
+  --swatch-pink-soft: #f9e6ef;
+  --swatch-slate: #56657a;
+  --swatch-slate-soft: #e8ecf1;
+}
+
+.dark {
+  --background: #0f141a;
+  --foreground: #e6ebf0;
+  --card: #161c24;
+  --card-foreground: #e6ebf0;
+  --popover: #19202a;
+  --popover-foreground: #e6ebf0;
+  --primary: #5aa0e0;
+  --primary-foreground: #0b1016;
+  --secondary: #1e2630;
+  --secondary-foreground: #e6ebf0;
+  --muted: #1b222b;
+  --muted-foreground: #94a1ae;
+  --accent: #1f2a36;
+  --accent-foreground: #e6ebf0;
+  --destructive: #f08a74;
+  --border: rgb(255 255 255 / 0.08);
+  --input: rgb(255 255 255 / 0.14);
+  --ring: #5aa0e0;
+
+  --brand-blue: #5aa0e0;
+  --brand-green: #4cc79e;
+  --income: #4cc79e;
+  --income-soft: rgb(76 199 158 / 0.14);
+  --expense: #f08a74;
+  --expense-soft: rgb(240 138 116 / 0.14);
+  --debt: #e3b04b;
+  --debt-soft: rgb(227 176 75 / 0.14);
+
+  --chart-1: #5aa0e0;
+  --chart-2: #4cc79e;
+  --chart-3: #f08a74;
+  --chart-4: #e3b04b;
+  --chart-5: #9d8ff0;
+
+  --sidebar: #121820;
+  --sidebar-foreground: #e6ebf0;
+  --sidebar-primary: #5aa0e0;
+  --sidebar-primary-foreground: #0b1016;
+  --sidebar-accent: #1c2530;
+  --sidebar-accent-foreground: #e6ebf0;
+  --sidebar-border: rgb(255 255 255 / 0.07);
+  --sidebar-ring: #5aa0e0;
+
+  --swatch-blue: #72b0ea;
+  --swatch-blue-soft: rgb(114 176 234 / 0.15);
+  --swatch-green: #5fd0a6;
+  --swatch-green-soft: rgb(95 208 166 / 0.15);
+  --swatch-teal: #4fc3cc;
+  --swatch-teal-soft: rgb(79 195 204 / 0.15);
+  --swatch-amber: #e8b55a;
+  --swatch-amber-soft: rgb(232 181 90 / 0.15);
+  --swatch-coral: #f2917b;
+  --swatch-coral-soft: rgb(242 145 123 / 0.15);
+  --swatch-violet: #a597f2;
+  --swatch-violet-soft: rgb(165 151 242 / 0.16);
+  --swatch-pink: #ee8fb9;
+  --swatch-pink-soft: rgb(238 143 185 / 0.15);
+  --swatch-slate: #a3b0bf;
+  --swatch-slate-soft: rgb(163 176 191 / 0.14);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01" off;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  /* Money always lines up in columns. */
+  .tabular,
+  [data-money] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* Pointy-top hexagon, the logo's shape, used for icon badges. */
+  .hex {
+    clip-path: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Route transitions (React <ViewTransition> in each page, see
+ * components/layout/page.tsx). Links tag navigations with a type:
+ *   nav         switching sections: quick fade, new page rises 6px
+ *   nav-forward drilling into a detail: slide in from the right
+ *   nav-back    returning: slide in from the left
+ * Untyped transitions (refresh, form actions) do not animate.
+ */
+::view-transition-old(.page-exit) {
+  animation: 120ms ease-out both aio-fade-out;
+}
+::view-transition-new(.page-enter) {
+  animation: 240ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both aio-rise-in;
+}
+::view-transition-old(.nav-forward) {
+  --slide-offset: -40px;
+  animation:
+    140ms ease-in both aio-fade-out,
+    320ms cubic-bezier(0.16, 1, 0.3, 1) both aio-slide-out;
+}
+::view-transition-new(.nav-forward) {
+  --slide-offset: 40px;
+  animation:
+    200ms ease-out 100ms both aio-fade-in,
+    320ms cubic-bezier(0.16, 1, 0.3, 1) both aio-slide-in;
+}
+::view-transition-old(.nav-back) {
+  --slide-offset: 40px;
+  animation:
+    140ms ease-in both aio-fade-out,
+    320ms cubic-bezier(0.16, 1, 0.3, 1) both aio-slide-out;
+}
+::view-transition-new(.nav-back) {
+  --slide-offset: -40px;
+  animation:
+    200ms ease-out 100ms both aio-fade-in,
+    320ms cubic-bezier(0.16, 1, 0.3, 1) both aio-slide-in;
+}
+@keyframes aio-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes aio-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes aio-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes aio-slide-in {
+  from {
+    translate: var(--slide-offset);
+  }
+}
+@keyframes aio-slide-out {
+  to {
+    translate: var(--slide-offset);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

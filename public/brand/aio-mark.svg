@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="AIO">
+  <defs>
+    <!-- White gaps between facets are cut out, so the mark works on any background. -->
+    <mask id="aio-cuts" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+      <rect width="100" height="100" fill="#fff"/>
+      <g fill="none" stroke="#000" stroke-width="2.1">
+        <path d="M50 5 11.4 77.24M50 5l38.6 72.24"/>
+        <path d="M50 33 23.6 83.64M50 33l26.4 50.64"/>
+        <path d="M50 2v31M50 52v46"/>
+        <path d="M4 52h20.88M75.12 52H96M4 61h16.08M79.92 61H96"/>
+        <path d="M40.1 52h19.8M35.41 61h29.18"/>
+      </g>
+      <path d="M50 33 40.1 52h19.8z" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#aio-cuts)">
+    <path fill="#3D95D7" d="M9 28 50 5 24.88 52H9z"/>
+    <path fill="#2E7FC4" d="M9 52h15.88l-4.8 9H9z"/>
+    <path fill="#2568A9" d="M9 61h11.08L13 74.24 9 72z"/>
+    <path fill="#4DAAE4" d="M50 5 13 74.24l12 6.74L50 33z"/>
+    <path fill="#2E7FC4" d="M40.1 52H50v9H35.41z"/>
+    <path fill="#2568A9" d="M35.41 61H50v34L25 80.98z"/>
+    <path fill="#4DBB8C" d="M91 28 50 5l25.12 47H91z"/>
+    <path fill="#36AA87" d="M91 52H75.12l4.8 9H91z"/>
+    <path fill="#21967F" d="M91 61H79.92L87 74.24 91 72z"/>
+    <path fill="#66CB99" d="m50 5 37 69.24-12 6.74L50 33z"/>
+    <path fill="#36AA87" d="M59.9 52H50v9h14.59z"/>
+    <path fill="#21967F" d="M64.59 61H50v34l25-14.02z"/>
+  </g>
+  <g fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m15.3 40.4 3.6 3.5 6.3-7.3"/>
+    <path d="M76.8 35.2h4.3l3.3 3.4v6.9a1 1 0 0 1-1 1h-6.6a1 1 0 0 1-1-1v-9.3a1 1 0 0 1 1-1ZM78.4 41.2h4.4M78.4 43.8h2.9"/>
+    <rect x="38" y="69.4" width="7.4" height="6.8" rx="1.2"/>
+    <path d="M38 72h7.4M40.2 68v2.4M43.2 68v2.4"/>
+    <circle cx="58.9" cy="70.6" r="1.85"/>
+    <path d="M55.7 76.6a3.2 3.2 0 0 1 6.4 0"/>
+  </g>
+</svg>

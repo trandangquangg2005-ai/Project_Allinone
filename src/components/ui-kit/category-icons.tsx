@@ -1,0 +1,102 @@
+import {
+  AirplaneTiltIcon,
+  ArrowsLeftRightIcon,
+  BabyIcon,
+  BankIcon,
+  BarbellIcon,
+  BookOpenIcon,
+  CarIcon,
+  ChalkboardTeacherIcon,
+  ChartLineUpIcon,
+  CoffeeIcon,
+  CreditCardIcon,
+  DeviceMobileIcon,
+  DotsThreeCircleIcon,
+  FirstAidKitIcon,
+  ForkKnifeIcon,
+  GameControllerIcon,
+  GasPumpIcon,
+  GiftIcon,
+  GraduationCapIcon,
+  HandCoinsIcon,
+  HeartIcon,
+  HouseIcon,
+  KeyIcon,
+  LightningIcon,
+  MoneyIcon,
+  MotorcycleIcon,
+  PawPrintIcon,
+  PiggyBankIcon,
+  PillIcon,
+  PopcornIcon,
+  ReceiptIcon,
+  ScissorsIcon,
+  ShoppingBagIcon,
+  SparkleIcon,
+  StorefrontIcon,
+  TagIcon,
+  TShirtIcon,
+  UsersThreeIcon,
+  WalletIcon,
+  WifiHighIcon,
+  WrenchIcon,
+} from "@phosphor-icons/react/ssr";
+
+export const CATEGORY_ICONS = {
+  food: ForkKnifeIcon,
+  coffee: CoffeeIcon,
+  motorbike: MotorcycleIcon,
+  fuel: GasPumpIcon,
+  car: CarIcon,
+  shopping: ShoppingBagIcon,
+  clothes: TShirtIcon,
+  home: HouseIcon,
+  rent: KeyIcon,
+  bill: ReceiptIcon,
+  electric: LightningIcon,
+  internet: WifiHighIcon,
+  phone: DeviceMobileIcon,
+  study: GraduationCapIcon,
+  book: BookOpenIcon,
+  health: FirstAidKitIcon,
+  medicine: PillIcon,
+  game: GameControllerIcon,
+  movie: PopcornIcon,
+  sport: BarbellIcon,
+  beauty: ScissorsIcon,
+  travel: AirplaneTiltIcon,
+  gift: GiftIcon,
+  love: HeartIcon,
+  family: UsersThreeIcon,
+  baby: BabyIcon,
+  pet: PawPrintIcon,
+  repair: WrenchIcon,
+  salary: MoneyIcon,
+  bonus: SparkleIcon,
+  tutoring: ChalkboardTeacherIcon,
+  invest: ChartLineUpIcon,
+  saving: PiggyBankIcon,
+  sell: StorefrontIcon,
+  loan: HandCoinsIcon,
+  card: CreditCardIcon,
+  other: DotsThreeCircleIcon,
+  tag: TagIcon,
+} as const;
+
+export type CategoryIconKey = keyof typeof CATEGORY_ICONS;
+export const CATEGORY_ICON_KEYS = Object.keys(CATEGORY_ICONS) as CategoryIconKey[];
+
+export const WALLET_ICONS = {
+  cash: WalletIcon,
+  bank: BankIcon,
+  ewallet: DeviceMobileIcon,
+  other: CreditCardIcon,
+} as const;
+
+export const TransferIcon = ArrowsLeftRightIcon;
+export const DebtIcon = HandCoinsIcon;
+
+export function CategoryGlyph({ icon, className }: { icon: string | null | undefined; className?: string }) {
+  const Glyph = CATEGORY_ICONS[(icon ?? "tag") as CategoryIconKey] ?? TagIcon;
+  return <Glyph weight="duotone" className={className} />;
+}
