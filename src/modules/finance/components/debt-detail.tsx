@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui-kit/confirm-dialog";
 import { ResponsiveDialog } from "@/components/ui-kit/responsive-dialog";
+import { canShare, copyText } from "@/lib/browser";
 import { formatDate, todayVN } from "@/lib/datetime";
 import { formatVND } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,7 @@ export function DebtDetail({
 
   async function remind() {
     const text = reminderText(debt);
-    if (navigator.share) {
+    if (canShare()) {
       try {
         await navigator.share({ text });
         return;
@@ -91,8 +92,9 @@ export function DebtDetail({
         // cancelled: fall back to copying
       }
     }
-    await navigator.clipboard.writeText(text);
-    toast.success("Đã chép tin nhắn nhắc nợ", { description: "Dán vào Zalo hoặc Messenger để gửi." });
+    if (await copyText(text))
+      toast.success("Đã chép tin nhắn nhắc nợ", { description: "Dán vào Zalo hoặc Messenger để gửi." });
+    else toast.error("Không chép được tin nhắn trên trình duyệt này.");
   }
 
   return (

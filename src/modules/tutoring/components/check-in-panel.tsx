@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/ui-kit/confirm-dialog";
 import { EmptyState } from "@/components/ui-kit/empty-state";
 import { initials } from "@/components/layout/user-menu";
+import { randomId } from "@/lib/browser";
 import { formatTime } from "@/lib/datetime";
 import { formatVND } from "@/lib/money";
 import { swatchStyle } from "@/lib/palette";
@@ -44,7 +45,7 @@ export function CheckInPanel({
   const [pending, startTransition] = useTransition();
 
   function startCheckIn(student: StudentView) {
-    setRequestId(crypto.randomUUID());
+    setRequestId(randomId());
     setDialogKey((k) => k + 1);
     setCheckInFor(student);
   }

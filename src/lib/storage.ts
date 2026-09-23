@@ -47,8 +47,16 @@ export async function deletePrivateFiles(pathnames: string[]): Promise<void> {
   await Promise.all(pathnames.map((p) => rm(localPath(p), { force: true })));
 }
 
-/** Streams a stored file back as a Response, honouring If-None-Match. */
-export async function privateFileResponse(pathname: string, request: Request): Promise<Response> {
+/**
+ * Streams a stored file back as a Response, honouring If-None-Match.
+ * `contentType` is the type recorded when the file was stored; the Blob store
+ * reports its own, the local dev store does not.
+ */
+export async function privateFileResponse(
+  pathname: string,
+  request: Request,
+  contentType = "image/jpeg",
+): Promise<Response> {
   const headers = {
     "Cache-Control": "private, no-cache",
     "X-Content-Type-Options": "nosniff",
@@ -76,7 +84,7 @@ export async function privateFileResponse(pathname: string, request: Request): P
       return new Response(null, { status: 304, headers: { ...headers, ETag: etag } });
     }
     return new Response(new Uint8Array(await readFile(file)), {
-      headers: { ...headers, "Content-Type": "image/jpeg", ETag: etag },
+      headers: { ...headers, "Content-Type": contentType, ETag: etag },
     });
   } catch {
     return new Response("Not found", { status: 404 });

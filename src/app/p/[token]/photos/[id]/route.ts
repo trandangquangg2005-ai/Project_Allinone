@@ -1,5 +1,5 @@
 import { privateFileResponse } from "@/lib/storage";
-import { parentPhotoPathname } from "@/modules/tutoring/share";
+import { parentPhoto } from "@/modules/tutoring/share";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -8,9 +8,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function GET(request: Request, { params }: RouteContext<"/p/[token]/photos/[id]">) {
   const { token, id } = await params;
   if (!UUID.test(id)) return new Response("Not found", { status: 404 });
-  const pathname = await parentPhotoPathname(token, id);
-  if (!pathname) return new Response("Not found", { status: 404 });
-  const response = await privateFileResponse(pathname, request);
+  const photo = await parentPhoto(token, id);
+  if (!photo) return new Response("Not found", { status: 404 });
+  const response = await privateFileResponse(photo.pathname, request, photo.contentType);
   response.headers.set("Referrer-Policy", "no-referrer");
   return response;
 }

@@ -13,6 +13,7 @@ import { ResponsiveDialog } from "@/components/ui-kit/responsive-dialog";
 import { SegmentedControl } from "@/components/ui-kit/segmented-control";
 import { initials } from "@/components/layout/user-menu";
 import { MODULES, type ModuleKey } from "@/config/modules";
+import { copyText } from "@/lib/browser";
 import { formatDateTime } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
 import { createUser, resetPassword, setUserStatus, updateUser } from "../actions";
@@ -157,8 +158,11 @@ export function AccountBoard({ accounts, currentUserId }: { accounts: AccountVie
             className="w-full sm:w-auto"
             onClick={async () => {
               if (!credentials) return;
-              await navigator.clipboard.writeText(`Tên đăng nhập: ${credentials.username}\nMật khẩu tạm: ${credentials.tempPassword}`);
-              toast.success("Đã chép thông tin đăng nhập");
+              const copied = await copyText(
+                `Tên đăng nhập: ${credentials.username}\nMật khẩu tạm: ${credentials.tempPassword}`,
+              );
+              if (copied) toast.success("Đã chép thông tin đăng nhập");
+              else toast.error("Không chép được. Hãy ghi lại mật khẩu tạm trước khi đóng.");
             }}
           >
             <CopyIcon className="size-4" /> Sao chép

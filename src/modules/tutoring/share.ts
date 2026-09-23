@@ -4,7 +4,7 @@ import { getDb, type Tx } from "@/db";
 import { setLocal } from "@/db/client";
 import { shareLinks, students, users } from "@/db/schema";
 import { sha256 } from "@/lib/crypto";
-import { getBankSettings, getPhotoPathname, getStudent, listLessons, listPayments } from "./queries";
+import { getBankSettings, getPhoto, getStudent, listLessons, listPayments, type StoredPhoto } from "./queries";
 
 const TOKEN = /^[A-Za-z0-9_-]{43}$/;
 
@@ -107,7 +107,7 @@ export async function loadParentView(token: string, month: string) {
 
 export type ParentView = NonNullable<Awaited<ReturnType<typeof loadParentView>>>;
 
-export async function parentPhotoPathname(token: string, photoId: string): Promise<string | null> {
-  const result = await withShareScope(token, ({ tx, ownerId }) => getPhotoPathname(tx, ownerId, photoId));
+export async function parentPhoto(token: string, photoId: string): Promise<StoredPhoto | null> {
+  const result = await withShareScope(token, ({ tx, ownerId }) => getPhoto(tx, ownerId, photoId));
   return result ?? null;
 }

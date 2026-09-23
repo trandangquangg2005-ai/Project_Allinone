@@ -1,7 +1,13 @@
 // Browser-only helpers for check-in photos.
 
-const MAX_EDGE = 1600;
-const QUALITY = 0.82;
+// 1280 px still shows a face, a notebook page or a whiteboard clearly, and
+// WebP at 0.72 lands around 60–120 KB per photo (a third of the original),
+// which keeps both uploads and stored data small.
+const MAX_EDGE = 1280;
+const WEBP_QUALITY = 0.72;
+const JPEG_QUALITY = 0.78;
+
+export type PreparedPhoto = { blob: Blob; type: "image/webp" | "image/jpeg"; extension: "webp" | "jpg" };
 
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -19,16 +25,20 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
+function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
 /**
- * Resizes to ≤1600 px (the browser applies EXIF rotation when decoding into
+ * Resizes to ≤1280 px (the browser applies EXIF rotation when decoding into
  * an <img>), stamps a bottom band with the event, time and student, and
- * re-encodes as JPEG (~200–400 KB). The server records its own time; the
- * stamp is for people looking at the photo.
+ * re-encodes as WebP, falling back to JPEG where WebP encoding is missing.
+ * The server records its own time; the stamp is for people looking at the photo.
  */
 export async function preparePhoto(
   file: File,
   stamp: { label: string; time: string; studentName: string },
-): Promise<Blob> {
+): Promise<PreparedPhoto> {
   const img = await loadImage(file);
   const scale = Math.min(1, MAX_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
   const width = Math.round(img.naturalWidth * scale);
@@ -59,9 +69,14 @@ export async function preparePhoto(
   ctx.font = `500 ${Math.round(size * 0.82)}px system-ui, -apple-system, "Segoe UI", sans-serif`;
   ctx.fillText(`${stamp.studentName}  ·  AIO`, x, y);
 
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Không nén được ảnh."))), "image/jpeg", QUALITY),
-  );
+  // Browsers that cannot encode WebP silently return PNG, which would be far
+  // bigger than the JPEG we want, so check the type we actually got.
+  const webp = await toBlob(canvas, "image/webp", WEBP_QUALITY);
+  if (webp && webp.type === "image/webp") return { blob: webp, type: "image/webp", extension: "webp" };
+
+  const jpeg = await toBlob(canvas, "image/jpeg", JPEG_QUALITY);
+  if (jpeg) return { blob: jpeg, type: "image/jpeg", extension: "jpg" };
+  throw new Error("Không nén được ảnh.");
 }
 
 export function currentPosition(timeoutMs = 6000): Promise<{ lat: number; lng: number } | null> {

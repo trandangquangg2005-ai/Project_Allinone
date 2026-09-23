@@ -18,7 +18,7 @@ export function Field({
 }) {
   return (
     <div className={cn("grid min-w-0 grid-cols-1 gap-2", className)}>
-      <Label htmlFor={htmlFor} className="text-[13px] font-medium text-muted-foreground">
+      <Label htmlFor={htmlFor} className="text-sm font-medium text-muted-foreground">
         {label}
       </Label>
       {children}

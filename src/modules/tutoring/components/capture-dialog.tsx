@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ResponsiveDialog } from "@/components/ui-kit/responsive-dialog";
 import { formatDateTime, formatTime } from "@/lib/datetime";
-import { currentPosition, preparePhoto } from "@/lib/image-client";
+import { currentPosition, preparePhoto, type PreparedPhoto } from "@/lib/image-client";
 import type { ActionResult } from "@/lib/action-result";
 
 const GPS_KEY = "aio:record-location";
@@ -51,7 +51,7 @@ export function CaptureDialog({
   onSubmit: (data: FormData) => Promise<ActionResult<unknown>>;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [photo, setPhoto] = useState<Blob | null>(null);
+  const [photo, setPhoto] = useState<PreparedPhoto | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [gps, setGps] = useState(() => (typeof window === "undefined" ? true : readGpsPreference()));
@@ -65,9 +65,9 @@ export function CaptureDialog({
     setProcessing(true);
     try {
       const at = new Date(Date.now() + getServerOffset());
-      const blob = await preparePhoto(file, { label: stampLabel, time: formatDateTime(at), studentName });
-      setPhoto(blob);
-      setPreview(URL.createObjectURL(blob));
+      const prepared = await preparePhoto(file, { label: stampLabel, time: formatDateTime(at), studentName });
+      setPhoto(prepared);
+      setPreview(URL.createObjectURL(prepared.blob));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không xử lý được ảnh.");
     } finally {
@@ -87,7 +87,7 @@ export function CaptureDialog({
     if (!photo) return;
     startTransition(async () => {
       const data = new FormData(form ?? undefined);
-      data.set("photo", new File([photo], "photo.jpg", { type: "image/jpeg" }));
+      data.set("photo", new File([photo.blob], `photo.${photo.extension}`, { type: photo.type }));
       data.set("deviceTime", new Date().toISOString());
       if (gps) {
         const position = await currentPosition();

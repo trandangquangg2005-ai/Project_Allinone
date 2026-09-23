@@ -175,13 +175,15 @@ export async function monthTeachingSummary(tx: Tx, userId: string, month: string
   return row;
 }
 
-export async function getPhotoPathname(tx: Tx, userId: string, photoId: string): Promise<string | null> {
+export type StoredPhoto = { pathname: string; contentType: string };
+
+export async function getPhoto(tx: Tx, userId: string, photoId: string): Promise<StoredPhoto | null> {
   const [row] = await tx
-    .select({ pathname: lessonPhotos.pathname })
+    .select({ pathname: lessonPhotos.pathname, contentType: lessonPhotos.contentType })
     .from(lessonPhotos)
     .where(and(eq(lessonPhotos.userId, userId), eq(lessonPhotos.id, photoId)))
     .limit(1);
-  return row?.pathname ?? null;
+  return row ?? null;
 }
 
 export type ShareLinkView = { token: string; createdAt: Date; lastViewedAt: Date | null };

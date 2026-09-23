@@ -172,7 +172,7 @@ export function TransactionSheet({
 
           {kind !== "transfer" ? (
             <Field label="Danh mục" error={errors.categoryId}>
-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+              <div className="grid grid-cols-3 gap-2 min-[380px]:grid-cols-4 sm:grid-cols-5">
                 {visibleCategories.map((category) => {
                   const selected = category.id === categoryId;
                   return (

@@ -9,7 +9,7 @@ export function createPool(connectionString: string | undefined, max = 10) {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set (see .env.example)");
   }
-  return new Pool({
+  const pool = new Pool({
     connectionString,
     // pg ignores `channel_binding` in the URL; enable SCRAM-SHA-256-PLUS here.
     enableChannelBinding: true,
@@ -18,6 +18,13 @@ export function createPool(connectionString: string | undefined, max = 10) {
     // Fail fast instead of waiting forever when the pool is exhausted.
     connectionTimeoutMillis: 10_000,
   });
+  // Neon drops idle connections (it suspends the compute after a few minutes).
+  // Without this listener that 'error' event is an uncaught exception and takes
+  // the whole server process down; pg discards the broken client by itself.
+  pool.on("error", (error) => {
+    console.error("[db] idle client error", error instanceof Error ? error.message : error);
+  });
+  return pool;
 }
 
 export function createDb(pool: Pool) {

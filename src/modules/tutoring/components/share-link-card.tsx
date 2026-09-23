@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui-kit/confirm-dialog";
+import { canShare, copyText } from "@/lib/browser";
 import { useOrigin } from "@/hooks/use-origin";
 import { formatDateTime } from "@/lib/datetime";
 import { regenerateShareLink, revokeShareLink } from "../actions";
@@ -37,13 +38,14 @@ export function ShareLinkCard({
 
   async function copy() {
     if (!url) return;
-    await navigator.clipboard.writeText(url);
-    toast.success("Đã chép link", { description: "Gửi cho phụ huynh qua Zalo hoặc tin nhắn." });
+    if (await copyText(url))
+      toast.success("Đã chép link", { description: "Gửi cho phụ huynh qua Zalo hoặc tin nhắn." });
+    else toast.error("Không chép được link. Hãy bấm giữ vào link để chép thủ công.");
   }
 
   async function share() {
     if (!url) return;
-    if (navigator.share) {
+    if (canShare()) {
       try {
         await navigator.share({ title: `Sổ theo dõi buổi học của ${studentName}`, url });
         return;

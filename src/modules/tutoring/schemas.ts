@@ -79,4 +79,4 @@ export const checkOutFields = z.object({
   lessonNote: text(1000, "Nội dung buổi học"),
 });
 
-export const MAX_PHOTO_BYTES = 3.5 * 1024 * 1024;
+export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;

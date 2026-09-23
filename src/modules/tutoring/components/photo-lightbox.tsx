@@ -31,7 +31,7 @@ export function LightboxProvider({ children }: { children: React.ReactNode }) {
             {photo && (
               <motion.div
                 key="backdrop"
-                className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4"
+                className="fixed inset-0 z-[60] grid overflow-y-auto overscroll-contain bg-black/85 p-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -40,9 +40,9 @@ export function LightboxProvider({ children }: { children: React.ReactNode }) {
                 aria-modal="true"
                 aria-label={photo.caption}
               >
-                <motion.figure layoutId={`photo-${photo.id}`} className="grid max-h-full max-w-3xl gap-3">
+                <motion.figure layoutId={`photo-${photo.id}`} className="m-auto grid max-w-3xl gap-3">
                   {/* eslint-disable-next-line @next/next/no-img-element -- private photo streamed by our route; must not go through the image optimiser */}
-                  <img src={photo.src} alt={photo.caption} className="max-h-[80dvh] w-auto rounded-2xl object-contain" />
+                  <img src={photo.src} alt={photo.caption} className="max-h-[calc(100dvh-6rem)] w-auto rounded-2xl object-contain" />
                   <figcaption className="text-center text-sm text-white/85">{photo.caption}</figcaption>
                 </motion.figure>
                 <button

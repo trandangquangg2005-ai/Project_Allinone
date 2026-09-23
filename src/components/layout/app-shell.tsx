@@ -15,7 +15,7 @@ export function AppShell({ user, children }: { user: NavUser; children: React.Re
         <Link href="/" transitionTypes={["nav"]} className="mb-7 flex items-center px-3">
           <Logo size={30} />
         </Link>
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <SidebarNav groups={sidebarGroups} />
         </div>
         <div className="border-t border-sidebar-border pt-3">

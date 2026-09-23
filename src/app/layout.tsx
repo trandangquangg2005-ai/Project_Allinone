@@ -30,6 +30,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // The on-screen keyboard resizes the layout viewport, so dvh-based sheets
+  // shrink with it instead of hiding fields and buttons behind the keyboard.
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f3f6f8" },
     { media: "(prefers-color-scheme: dark)", color: "#0f141a" },

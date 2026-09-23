@@ -31,14 +31,21 @@ function refresh() {
   revalidatePath("/", "layout");
 }
 
-async function readPhoto(form: FormData): Promise<Buffer> {
+type IncomingPhoto = { data: Buffer; contentType: "image/webp" | "image/jpeg"; extension: "webp" | "jpg" };
+
+async function readPhoto(form: FormData): Promise<IncomingPhoto> {
   const file = form.get("photo");
   if (!(file instanceof File) || file.size === 0) throw new UserError("Chưa có ảnh. Hãy chụp ảnh trước.");
   if (file.size > MAX_PHOTO_BYTES) throw new UserError("Ảnh quá lớn, hãy chụp lại.");
   const data = Buffer.from(await file.arrayBuffer());
-  // Trust the bytes, not the declared type: JPEG starts with FF D8 FF.
-  if (data[0] !== 0xff || data[1] !== 0xd8 || data[2] !== 0xff) throw new UserError("Ảnh không đúng định dạng JPEG.");
-  return data;
+  // Trust the bytes, not the declared type.
+  if (data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff) {
+    return { data, contentType: "image/jpeg", extension: "jpg" };
+  }
+  if (data.subarray(0, 4).toString("latin1") === "RIFF" && data.subarray(8, 12).toString("latin1") === "WEBP") {
+    return { data, contentType: "image/webp", extension: "webp" };
+  }
+  throw new UserError("Ảnh không đúng định dạng, chỉ nhận JPEG hoặc WebP.");
 }
 
 function fields(form: FormData) {
@@ -147,8 +154,8 @@ export const checkIn = createFormAction(guard, async (form, { user }) => {
         .returning({ id: lessons.id });
 
       const photoId = randomUUID();
-      const pathname = `u/${user.id}/lessons/${lesson.id}/check-in-${photoId}.jpg`;
-      await putPrivateFile(pathname, photo, "image/jpeg");
+      const pathname = `u/${user.id}/lessons/${lesson.id}/check-in-${photoId}.${photo.extension}`;
+      await putPrivateFile(pathname, photo.data, photo.contentType);
       uploaded.push(pathname);
       await tx.insert(lessonPhotos).values({
         id: photoId,
@@ -157,7 +164,8 @@ export const checkIn = createFormAction(guard, async (form, { user }) => {
         studentId: student.id,
         kind: "check_in",
         pathname,
-        size: photo.length,
+        contentType: photo.contentType,
+        size: photo.data.length,
       });
       return lesson.id;
     });
@@ -184,8 +192,8 @@ export const checkOut = createFormAction(guard, async (form, { user }) => {
       if (lesson.status !== "in_progress") throw new UserError("Buổi này đã check-out rồi.");
 
       const photoId = randomUUID();
-      const pathname = `u/${user.id}/lessons/${lesson.id}/check-out-${photoId}.jpg`;
-      await putPrivateFile(pathname, photo, "image/jpeg");
+      const pathname = `u/${user.id}/lessons/${lesson.id}/check-out-${photoId}.${photo.extension}`;
+      await putPrivateFile(pathname, photo.data, photo.contentType);
       uploaded.push(pathname);
       await tx.insert(lessonPhotos).values({
         id: photoId,
@@ -194,7 +202,8 @@ export const checkOut = createFormAction(guard, async (form, { user }) => {
         studentId: lesson.studentId,
         kind: "check_out",
         pathname,
-        size: photo.length,
+        contentType: photo.contentType,
+        size: photo.data.length,
       });
       await tx
         .update(lessons)
