@@ -20,6 +20,36 @@ Next.js 16 (App Router, TypeScript), React 19, Tailwind CSS 4, shadcn/ui, Motion
 
 `tests/rls.integration.test.ts` chạy trên DB thật để chứng minh các điều trên.
 
+## Quản trị viên xem dữ liệu tài khoản khác
+
+Trang **Quản trị** có nút **Mở dữ liệu** ở mỗi tài khoản. Bấm vào, admin xem và sửa được toàn bộ dữ liệu của tài khoản đó trong 4 giờ, đúng như người dùng đó thấy (RLS chạy với `user_id` của họ).
+
+- Một dải màu hổ phách luôn hiện trên đầu màn hình, kèm nút **Thoát**.
+- Mọi thao tác ghi trong lúc này được lưu vào bảng `audit_log` (ai, tài khoản nào, làm gì, lúc nào) và hiện ở cuối trang Quản trị. Nhật ký tự xóa sau 90 ngày.
+- Vé "xem như" nằm trong cookie `aio_view_as`, có chữ ký và gắn với đúng admin đã tạo nó; đăng xuất hoặc đăng nhập lại là mất hiệu lực.
+
+## Dùng khi không có mạng
+
+- **Xem:** service worker (`public/sw.js`) giữ lại những trang đã mở, ảnh chấm công và toàn bộ giao diện. Trang chưa từng mở sẽ hiện `/offline`.
+- **Ghi:** mọi thao tác lưu/sửa/xóa đi qua `src/modules/*/offline-actions.ts`. Khi không gửi được, thao tác (kèm ảnh) nằm trong IndexedDB và hiện ở nút trạng thái góc màn hình.
+- **Gửi lại:** khi có mạng, có thể quay lại tab, hoặc ngay sau một thao tác mới, cả hàng đợi được gửi trong **một** request tới `/api/sync`. Không có vòng lặp hỏi server định kỳ.
+- Mỗi thao tác mang một id riêng; server ghi nhận id đó trước khi thực hiện, nên gửi lại lần hai không tạo bản ghi trùng.
+- Buổi dạy check-in lúc mất mạng vẫn hiện "Đang dạy" kèm ảnh; check-out gắn với buổi đó qua `checkInRequestId`, và giờ ghi nhận là giờ thật lúc dạy, không phải lúc đồng bộ.
+
+## Giữ trong hạn mức miễn phí
+
+Neon free: **512 MB** dữ liệu, **100 CU-hours**/tháng (≈400 giờ thức ở 0.25 CU), tự ngủ sau 5 phút. Vercel Hobby: 100 GB băng thông, **10 GB** Fast Origin Transfer, 1M lượt gọi. Blob Hobby: **1 GB**, **2.000** lượt ghi và **10.000** lượt đọc/tháng.
+
+Những gì app đang làm để ở trong ngưỡng đó:
+
+- Ảnh nén WebP ≤1280px (~10 KB/ảnh). 100 buổi/tháng ≈ 200 ảnh ≈ 2 MB và 200/2.000 lượt ghi Blob.
+- Ảnh được đánh dấu bất biến và cache ở máy, nên xem lại không tốn thêm lượt đọc Blob hay băng thông.
+- Ảnh tải lên **trước** khi mở transaction: Neon tính "idle in transaction" là compute đang chạy.
+- Pool tối đa 3 kết nối mỗi instance.
+- Không có cron, không có polling. Đồng bộ chỉ chạy khi có sự kiện, và giãn dần tới 8 phút nếu server không trả lời.
+- `audit_log` tự dọn sau 90 ngày, `sync_ops` sau 30 ngày.
+- Xem dung lượng đang dùng ở cuối trang **Quản trị**.
+
 ## Chạy trên máy
 
 Cần Node.js 22+.

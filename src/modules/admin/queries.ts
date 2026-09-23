@@ -64,3 +64,12 @@ export async function listAudit(limit = 60): Promise<AuditEntry[]> {
     .orderBy(desc(auditLog.createdAt))
     .limit(limit);
 }
+
+/**
+ * Neon's free plan stops accepting writes at 0.5 GB, so the number is worth
+ * having in plain sight. One cheap query, only when this page is opened.
+ */
+export async function getStorageUsage(): Promise<{ bytes: number; limit: number }> {
+  const result = await getDb().execute<{ size: string }>(sql`select pg_database_size(current_database())::text as size`);
+  return { bytes: Number(result.rows[0]?.size ?? 0), limit: 512 * 1024 * 1024 };
+}
