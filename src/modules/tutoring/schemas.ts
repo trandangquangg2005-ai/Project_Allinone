@@ -71,12 +71,17 @@ export const checkInFields = z.object({
   lng: z.coerce.number().min(-180).max(180).optional(),
 });
 
-export const checkOutFields = z.object({
-  lessonId: idSchema,
-  deviceTime: z.coerce.date().optional(),
-  lat: z.coerce.number().min(-90).max(90).optional(),
-  lng: z.coerce.number().min(-180).max(180).optional(),
-  lessonNote: text(1000, "Nội dung buổi học"),
-});
+export const checkOutFields = z
+  .object({
+    lessonId: idSchema.optional(),
+    // A lesson checked in offline has no id yet; it is found again by the id
+    // the device gave the check-in, once that check-in has been sent.
+    checkInRequestId: z.string().regex(/^[A-Za-z0-9-]{8,64}$/).optional(),
+    deviceTime: z.coerce.date().optional(),
+    lat: z.coerce.number().min(-90).max(90).optional(),
+    lng: z.coerce.number().min(-180).max(180).optional(),
+    lessonNote: text(1000, "Nội dung buổi học"),
+  })
+  .refine((v) => v.lessonId || v.checkInRequestId, { message: "Thiếu buổi học cần check-out." });
 
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;

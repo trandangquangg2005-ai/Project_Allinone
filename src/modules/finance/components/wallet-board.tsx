@@ -17,7 +17,7 @@ import { SegmentedControl } from "@/components/ui-kit/segmented-control";
 import { SwatchPicker } from "@/components/ui-kit/swatch-picker";
 import { formatVND } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import { archiveWallet, deleteWallet, saveWallet } from "../actions";
+import { archiveWallet, deleteWallet, saveWallet } from "../offline-actions";
 import { WALLET_KIND_LABELS, type WalletKind, type WalletView } from "../types";
 import { useTransactionSheet } from "./transaction-provider";
 

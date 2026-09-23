@@ -88,7 +88,9 @@ export function CaptureDialog({
     startTransition(async () => {
       const data = new FormData(form ?? undefined);
       data.set("photo", new File([photo.blob], `photo.${photo.extension}`, { type: photo.type }));
-      data.set("deviceTime", new Date().toISOString());
+      // Corrected against the server clock, the same value the photo stamp
+      // shows. Offline this is what the lesson is finally recorded at.
+      data.set("deviceTime", new Date(Date.now() + getServerOffset()).toISOString());
       if (gps) {
         const position = await currentPosition();
         if (position) {

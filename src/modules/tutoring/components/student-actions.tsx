@@ -8,7 +8,7 @@ import { ConfirmDialog } from "@/components/ui-kit/confirm-dialog";
 import { formatDate } from "@/lib/datetime";
 import { formatVND } from "@/lib/money";
 import type { WalletView } from "@/modules/finance/types";
-import { deletePayment } from "../actions";
+import { deletePayment } from "../offline-actions";
 import type { StudentView, TuitionPaymentView } from "../types";
 import { LessonSheet } from "./lesson-sheet";
 import { PaymentSheet } from "./payment-sheet";

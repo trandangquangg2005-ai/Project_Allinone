@@ -3,7 +3,7 @@
 import { CameraIcon, SignOutIcon, TrashIcon, UserPlusIcon } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,12 +14,28 @@ import { initials } from "@/components/layout/user-menu";
 import { randomId } from "@/lib/browser";
 import { formatTime } from "@/lib/datetime";
 import { formatVND } from "@/lib/money";
+import { discard, getOfflineState, subscribeOffline, type OfflineState } from "@/lib/offline/queue";
 import { swatchStyle } from "@/lib/palette";
-import { checkIn, checkOut, deleteLesson } from "../actions";
+import { checkIn, checkOut, deleteLesson } from "../offline-actions";
 import type { LessonView, StudentView } from "../types";
 import { CaptureDialog } from "./capture-dialog";
 import { LiveTimer } from "./live-timer";
 import { PhotoThumb } from "./photo-lightbox";
+
+const EMPTY_OFFLINE: OfflineState = { online: true, syncing: false, pending: [], failed: [] };
+
+type CheckInPayload = { studentId: string; clientRequestId: string; deviceTime?: string };
+type CheckOutPayload = { checkInRequestId?: string };
+
+/** The photo as it sits in the queue, before it has been uploaded. */
+function LocalPhoto({ file }: { file: Blob }) {
+  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- a blob: URL from this device, not a remote image
+    <img src={url} alt="Ảnh check-in chờ gửi" className="size-16 shrink-0 rounded-xl object-cover" />
+  );
+}
 
 export function CheckInPanel({
   activeLesson,
@@ -50,7 +66,55 @@ export function CheckInPanel({
     setCheckInFor(student);
   }
 
-  if (activeLesson) {
+  // A check-in that has not reached the server yet still counts as a lesson in
+  // progress: the card below is built from the queue instead of from the page.
+  const offline = useSyncExternalStore(subscribeOffline, getOfflineState, () => EMPTY_OFFLINE);
+  const queuedLesson = useMemo(() => {
+    const closed = new Set(
+      offline.pending.filter((op) => op.name === "checkOut").map((op) => (op.payload as CheckOutPayload).checkInRequestId),
+    );
+    return offline.pending.find(
+      (op) => op.name === "checkIn" && !closed.has((op.payload as CheckInPayload).clientRequestId),
+    );
+  }, [offline.pending]);
+
+  const current = activeLesson
+    ? {
+        name: activeLesson.studentName,
+        color: activeLesson.studentColor,
+        since: activeLesson.checkInAt,
+        lessonId: activeLesson.id,
+        requestId: "",
+        queuedId: null,
+        queued: false,
+        photo: activeLesson.checkInPhotoId ? (
+          <PhotoThumb
+            id={activeLesson.checkInPhotoId}
+            src={`/api/photos/${activeLesson.checkInPhotoId}`}
+            caption={`Check-in ${formatTime(activeLesson.checkInAt)}, ${activeLesson.studentName}`}
+            label="Vào"
+            className="size-16 shrink-0"
+          />
+        ) : null,
+      }
+    : queuedLesson
+      ? (() => {
+          const payload = queuedLesson.payload as CheckInPayload;
+          const student = students.find((s) => s.id === payload.studentId);
+          return {
+            name: student?.name ?? "Học sinh",
+            color: student?.color ?? "slate",
+            since: new Date(payload.deviceTime ?? queuedLesson.createdAt),
+            lessonId: null,
+            requestId: payload.clientRequestId,
+            queuedId: queuedLesson.id,
+            queued: true,
+            photo: queuedLesson.file ? <LocalPhoto file={queuedLesson.file} /> : null,
+          };
+        })()
+      : null;
+
+  if (current) {
     return (
       <>
         <motion.section
@@ -60,8 +124,8 @@ export function CheckInPanel({
           className="grid gap-5 rounded-3xl border border-primary/25 bg-accent p-5 sm:p-6"
         >
           <div className="flex items-start gap-4">
-            <span className="hex flex size-12 shrink-0 items-center justify-center text-sm font-semibold" style={swatchStyle(activeLesson.studentColor)}>
-              {initials(activeLesson.studentName)}
+            <span className="hex flex size-12 shrink-0 items-center justify-center text-sm font-semibold" style={swatchStyle(current.color)}>
+              {initials(current.name)}
             </span>
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-2 text-sm font-medium text-primary">
@@ -70,21 +134,14 @@ export function CheckInPanel({
                   <span className="relative inline-flex size-2.5 rounded-full bg-primary" />
                 </span>
                 Đang dạy
+                {current.queued && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px]">chờ gửi</span>}
               </p>
-              <h2 className="truncate text-xl font-semibold">{activeLesson.studentName}</h2>
-              <p className="text-sm text-muted-foreground">Vào lúc {formatTime(activeLesson.checkInAt)}</p>
+              <h2 className="truncate text-xl font-semibold">{current.name}</h2>
+              <p className="text-sm text-muted-foreground">Vào lúc {formatTime(current.since)}</p>
             </div>
-            {activeLesson.checkInPhotoId && (
-              <PhotoThumb
-                id={activeLesson.checkInPhotoId}
-                src={`/api/photos/${activeLesson.checkInPhotoId}`}
-                caption={`Check-in ${formatTime(activeLesson.checkInAt)}, ${activeLesson.studentName}`}
-                label="Vào"
-                className="size-16 shrink-0"
-              />
-            )}
+            {current.photo}
           </div>
-          <LiveTimer since={activeLesson.checkInAt} className="text-center text-5xl font-bold tracking-tight sm:text-6xl" />
+          <LiveTimer since={current.since} className="text-center text-5xl font-bold tracking-tight sm:text-6xl" />
           <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
             <Button
               size="lg"
@@ -105,10 +162,10 @@ export function CheckInPanel({
           key={`out-${dialogKey}`}
           open={checkOutOpen}
           onOpenChange={setCheckOutOpen}
-          title={`Check-out: ${activeLesson.studentName}`}
+          title={`Check-out: ${current.name}`}
           description="Chụp một ảnh lúc kết thúc buổi học."
           stampLabel="CHECK-OUT"
-          studentName={activeLesson.studentName}
+          studentName={current.name}
           getServerOffset={getServerOffset}
           submitLabel={(t) => `Check-out lúc ${t}`}
           extra={
@@ -120,9 +177,12 @@ export function CheckInPanel({
             </div>
           }
           onSubmit={async (data) => {
-            data.set("lessonId", activeLesson.id);
+            // A lesson still in the queue has no id yet, so the check-out
+            // points at the check-in's own request id instead.
+            if (current.lessonId) data.set("lessonId", current.lessonId);
+            else data.set("checkInRequestId", current.requestId);
             const result = await checkOut(data);
-            if (result.ok) toast.success("Đã check-out", { description: `Kết thúc buổi dạy ${activeLesson.studentName}.` });
+            if (result.ok) toast.success("Đã check-out", { description: `Kết thúc buổi dạy ${current.name}.` });
             return result;
           }}
         />
@@ -134,7 +194,12 @@ export function CheckInPanel({
           confirmLabel="Hủy buổi"
           onConfirm={() =>
             startTransition(async () => {
-              const result = await deleteLesson({ id: activeLesson.id });
+              if (!current.lessonId) {
+                await discard(current.queuedId ?? "");
+                toast.success("Đã hủy buổi dạy");
+                return;
+              }
+              const result = await deleteLesson({ id: current.lessonId });
               if (!result.ok) toast.error(result.error);
               else toast.success("Đã hủy buổi dạy");
             })

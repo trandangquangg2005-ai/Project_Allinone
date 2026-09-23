@@ -13,7 +13,7 @@ import { SegmentedControl } from "@/components/ui-kit/segmented-control";
 import { SwatchPicker } from "@/components/ui-kit/swatch-picker";
 import { swatchStyle } from "@/lib/palette";
 import { cn } from "@/lib/utils";
-import { archiveCategory, saveCategory } from "../actions";
+import { archiveCategory, saveCategory } from "../offline-actions";
 import type { CategoryKind, CategoryView } from "../types";
 
 export function CategoryBoard({ categories }: { categories: CategoryView[] }) {

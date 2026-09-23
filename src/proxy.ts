@@ -11,7 +11,9 @@ import {
 // visitors to /login. The real check (account active, session version,
 // modules) happens in the DAL next to the data.
 
-const PUBLIC = ["/login"];
+// /offline is the service worker's fallback page: it must be reachable while
+// signed out, because that is exactly when there is no way to check a session.
+const PUBLIC = ["/login", "/offline"];
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -42,6 +44,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Skip assets, parent links (/p/...) and route handlers (they authorise themselves).
-    "/((?!_next/static|_next/image|api/|p/|brand/|icons/|favicon\\.ico|icon\\.svg|apple-icon|manifest\\.webmanifest|opengraph-image|robots\\.txt).*)",
+    "/((?!_next/static|_next/image|api/|p/|brand/|icons/|sw\\.js|favicon\\.ico|icon\\.svg|apple-icon|manifest\\.webmanifest|opengraph-image|robots\\.txt).*)",
   ],
 };

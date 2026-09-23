@@ -12,7 +12,7 @@ import { ConfirmDialog } from "@/components/ui-kit/confirm-dialog";
 import { ResponsiveDialog } from "@/components/ui-kit/responsive-dialog";
 import { SegmentedControl } from "@/components/ui-kit/segmented-control";
 import { toVNDate, toVNTimeInput, todayVN } from "@/lib/datetime";
-import { addManualLesson, deleteLesson, updateLesson } from "../actions";
+import { addManualLesson, deleteLesson, updateLesson } from "../offline-actions";
 import type { LessonView } from "../types";
 
 /** Edit a finished lesson, or add one by hand (flagged "nhập tay" for parents). */

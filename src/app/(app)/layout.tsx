@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { OfflineProvider } from "@/components/offline/offline-provider";
 import { requireUser } from "@/lib/auth/dal";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -9,6 +10,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       viewingAs={user.actor ? { username: user.username, adminName: user.actor.username } : null}
     >
       {children}
+      <OfflineProvider userId={user.id} />
     </AppShell>
   );
 }

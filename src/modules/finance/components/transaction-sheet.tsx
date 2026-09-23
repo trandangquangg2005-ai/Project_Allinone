@@ -15,7 +15,7 @@ import { ResponsiveDialog } from "@/components/ui-kit/responsive-dialog";
 import { SegmentedControl } from "@/components/ui-kit/segmented-control";
 import { addDays, todayVN } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
-import { deleteTransaction, saveTransaction } from "../actions";
+import { deleteTransaction, saveTransaction } from "../offline-actions";
 import type { CategoryView, TransactionView, TxKind, WalletView } from "../types";
 
 export type TransactionDraft = Partial<TransactionView> & { kind?: TxKind };

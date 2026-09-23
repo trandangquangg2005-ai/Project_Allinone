@@ -48,6 +48,20 @@ async function readPhoto(form: FormData): Promise<IncomingPhoto> {
   throw new UserError("Ảnh không đúng định dạng, chỉ nhận JPEG hoặc WebP.");
 }
 
+/**
+ * The moment to record. The app corrects its clock against the server before
+ * stamping the photo, so `deviceTime` matches server time while online and is
+ * the only truth for a lesson taken with no signal and sent hours later.
+ * A clock that is wildly off falls back to the server's own now().
+ */
+function stampedAt(deviceTime: Date | undefined) {
+  if (!deviceTime) return sql`now()`;
+  const ms = deviceTime.getTime();
+  const now = Date.now();
+  if (ms > now + 2 * 60_000 || ms < now - 14 * 24 * 60 * 60_000) return sql`now()`;
+  return deviceTime;
+}
+
 function fields(form: FormData) {
   return Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string" && v !== ""));
 }
@@ -154,7 +168,7 @@ export const checkIn = createFormAction({ ...guard, name: "checkIn" }, async (fo
           userId: user.id,
           studentId: student.id,
           status: "in_progress",
-          checkInAt: sql`now()`,
+          checkInAt: stampedAt(input.deviceTime),
           deviceCheckInAt: input.deviceTime ?? null,
           fee: student.rate,
           checkInLat: input.lat ?? null,
@@ -196,7 +210,14 @@ export const checkOut = createFormAction({ ...guard, name: "checkOut" }, async (
       const [lesson] = await tx
         .select({ id: lessons.id, studentId: lessons.studentId, status: lessons.status })
         .from(lessons)
-        .where(and(eq(lessons.userId, user.id), eq(lessons.id, input.lessonId)))
+        .where(
+          and(
+            eq(lessons.userId, user.id),
+            input.lessonId
+              ? eq(lessons.id, input.lessonId)
+              : eq(lessons.clientRequestId, input.checkInRequestId ?? ""),
+          ),
+        )
         .limit(1);
       if (!lesson) throw new UserError("Không tìm thấy buổi dạy.");
       if (lesson.status !== "in_progress") throw new UserError("Buổi này đã check-out rồi.");
@@ -215,7 +236,10 @@ export const checkOut = createFormAction({ ...guard, name: "checkOut" }, async (
         .update(lessons)
         .set({
           status: "completed",
-          checkOutAt: sql`now()`,
+          // Never before the check-in: a device whose clock drifts would
+          // otherwise be rejected by the database and the lesson, recorded
+          // offline hours earlier, could never be sent at all.
+          checkOutAt: sql`greatest(${stampedAt(input.deviceTime)}, ${lessons.checkInAt} + interval '1 minute')`,
           deviceCheckOutAt: input.deviceTime ?? null,
           checkOutLat: input.lat ?? null,
           checkOutLng: input.lng ?? null,

@@ -13,7 +13,7 @@ import { todayVN } from "@/lib/datetime";
 import { formatVND } from "@/lib/money";
 import { WalletChips } from "@/modules/finance/components/transaction-sheet";
 import type { WalletView } from "@/modules/finance/types";
-import { recordPayment } from "../actions";
+import { recordPayment } from "../offline-actions";
 import type { StudentView } from "../types";
 
 export function PaymentSheet({

@@ -12,7 +12,7 @@ import { ResponsiveDialog } from "@/components/ui-kit/responsive-dialog";
 import { SegmentedControl } from "@/components/ui-kit/segmented-control";
 import { todayVN } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
-import { saveDebt } from "../actions";
+import { saveDebt } from "../offline-actions";
 import type { DebtView, WalletView } from "../types";
 import { WalletChips } from "./transaction-sheet";
 

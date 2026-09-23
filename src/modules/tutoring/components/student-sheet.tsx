@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ResponsiveDialog } from "@/components/ui-kit/responsive-dialog";
 import { SwatchPicker } from "@/components/ui-kit/swatch-picker";
-import { archiveStudent, saveStudent } from "../actions";
+import { archiveStudent, saveStudent } from "../offline-actions";
 import type { StudentView } from "../types";
 
 export function StudentSheet({

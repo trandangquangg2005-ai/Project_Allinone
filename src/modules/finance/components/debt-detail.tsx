@@ -22,7 +22,7 @@ import { canShare, copyText } from "@/lib/browser";
 import { formatDate, todayVN } from "@/lib/datetime";
 import { formatVND } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import { addDebtPayment, deleteDebt, deleteDebtPayment, setDebtSettled } from "../actions";
+import { addDebtPayment, deleteDebt, deleteDebtPayment, setDebtSettled } from "../offline-actions";
 import type { DebtPaymentView, DebtView, WalletView } from "../types";
 import { WalletChips } from "./transaction-sheet";
 
