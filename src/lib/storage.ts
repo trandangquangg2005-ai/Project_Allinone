@@ -12,13 +12,30 @@ import path from "node:path";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".uploads");
 
+/** Photo storage failed for a reason the person on screen should be told. */
+export class StorageError extends Error {}
+
+const NOT_CONNECTED =
+  "Chưa lưu được ảnh vì kho ảnh chưa sẵn sàng. Vào Vercel → Storage, tạo Blob store ở chế độ Private, bấm Connect vào project rồi Redeploy.";
+
 function blobEnabled(): boolean {
   if (process.env.BLOB_READ_WRITE_TOKEN) return true;
   if (process.env.VERCEL) return true; // OIDC auth when the store is connected
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Blob storage is not configured (connect a private Blob store)");
-  }
+  if (process.env.NODE_ENV === "production") throw new StorageError(NOT_CONNECTED);
   return false;
+}
+
+/**
+ * The Blob SDK's own errors ("No token found", "store not found", …) mean one
+ * thing to the person holding the phone: the photo did not get saved. Say that,
+ * and keep the original text in the server log for whoever fixes it.
+ */
+export function storageFailure(error: unknown, action: string): StorageError {
+  if (error instanceof StorageError) return error;
+  const detail = error instanceof Error ? error.message : String(error);
+  console.error(`[storage] ${action} failed:`, detail);
+  if (/token|store|unauthor|forbidden|not.*found|access/i.test(detail)) return new StorageError(NOT_CONNECTED);
+  return new StorageError("Không lưu được ảnh. Hãy thử lại; nếu vẫn lỗi thì kiểm tra kho ảnh trên Vercel.");
 }
 
 function localPath(pathname: string) {
@@ -28,14 +45,33 @@ function localPath(pathname: string) {
 }
 
 export async function putPrivateFile(pathname: string, data: Buffer, contentType: string): Promise<void> {
-  if (blobEnabled()) {
-    // Unique pathnames: a retried upload fails loudly instead of overwriting.
-    await put(pathname, data, { access: "private", contentType, addRandomSuffix: false });
-    return;
+  try {
+    if (blobEnabled()) {
+      // Unique pathnames: a retried upload fails loudly instead of overwriting.
+      await put(pathname, data, { access: "private", contentType, addRandomSuffix: false });
+      return;
+    }
+    const file = localPath(pathname);
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, data);
+  } catch (error) {
+    throw storageFailure(error, `put ${pathname}`);
   }
-  const file = localPath(pathname);
-  await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, data);
+}
+
+/**
+ * Round-trips a tiny file so an admin can see whether photos can be stored at
+ * all, without waiting for a real lesson to fail. Costs one write.
+ */
+export async function checkStorage(): Promise<{ ok: true; where: string } | { ok: false; error: string }> {
+  const pathname = `_healthcheck/${Date.now()}.txt`;
+  try {
+    await putPrivateFile(pathname, Buffer.from("aio"), "text/plain");
+    await deletePrivateFiles([pathname]);
+    return { ok: true, where: blobEnabled() ? "Vercel Blob (private)" : "thư mục .uploads trên máy" };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 export async function deletePrivateFiles(pathnames: string[]): Promise<void> {

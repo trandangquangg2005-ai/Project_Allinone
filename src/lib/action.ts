@@ -5,6 +5,7 @@ import type { ModuleKey } from "@/config/modules";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/dal";
 import { recordAudit, summarize } from "@/lib/audit";
 import { friendlyDbError } from "@/lib/db-errors";
+import { StorageError } from "@/lib/storage";
 
 import type { ActionResult } from "./action-result";
 
@@ -38,7 +39,7 @@ async function authorize(guard: Guard): Promise<CurrentUser | string> {
 
 function toFailure(error: unknown): { ok: false; error: string } {
   unstable_rethrow(error); // let redirect()/notFound() through
-  if (error instanceof UserError) return { ok: false, error: error.message };
+  if (error instanceof UserError || error instanceof StorageError) return { ok: false, error: error.message };
   if (error instanceof ZodError) return { ok: false, error: error.issues[0]?.message ?? "Dữ liệu không hợp lệ." };
   const friendly = friendlyDbError(error);
   if (friendly) return { ok: false, error: friendly };

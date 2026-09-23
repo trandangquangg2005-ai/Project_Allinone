@@ -16,6 +16,7 @@ import {
   VIEW_AS_MAX_AGE_SECONDS,
 } from "@/lib/auth/session";
 import { recordAudit } from "@/lib/audit";
+import { checkStorage } from "@/lib/storage";
 import { provisionAccount } from "@/modules/accounts/provision";
 import { createUserSchema, updateUserSchema, userIdSchema, userStatusSchema } from "./schemas";
 
@@ -129,4 +130,9 @@ export const stopViewAs = createAction({ ...guard, name: "stopViewAs" }, z.objec
   (await cookies()).delete(VIEW_AS_COOKIE);
   revalidatePath("/", "layout");
   return null;
+});
+
+/** "Kiểm tra kho ảnh": writes a tiny file and deletes it, and says what broke. */
+export const testPhotoStorage = createAction({ ...guard, name: "testPhotoStorage" }, z.object({}), async () => {
+  return checkStorage();
 });

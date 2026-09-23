@@ -3,6 +3,7 @@ import { Page } from "@/components/layout/page";
 import { requireAdmin } from "@/lib/auth/dal";
 import { AccountBoard } from "@/modules/admin/components/account-board";
 import { AuditList } from "@/modules/admin/components/audit-list";
+import { StorageCheck } from "@/modules/admin/components/storage-check";
 import { getStorageUsage, listAccounts, listAudit } from "@/modules/admin/queries";
 
 export const metadata: Metadata = { title: "Quản trị" };
@@ -14,7 +15,11 @@ export default async function AdminPage() {
   return (
     <Page title="Tài khoản" description="Tạo tài khoản, bật tắt chức năng và khóa khi cần. Dữ liệu của từng tài khoản luôn tách riêng.">
       <AccountBoard accounts={accounts} currentUserId={admin.actor?.id ?? admin.id} />
-      <section className="mt-8 grid gap-2 rounded-2xl border bg-card p-4">
+      <section className="mt-8 grid gap-4">
+        <StorageCheck />
+      </section>
+
+      <section className="mt-4 grid gap-2 rounded-2xl border bg-card p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 className="font-semibold">Dung lượng cơ sở dữ liệu</h2>
           <p className="text-sm text-muted-foreground">
