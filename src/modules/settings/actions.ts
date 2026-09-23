@@ -9,7 +9,7 @@ import { createAction, UserError } from "@/lib/action";
 import { BANKS } from "@/lib/banks";
 
 export const updateProfile = createAction(
-  {},
+  { name: "updateProfile" },
   z.object({ displayName: z.string().trim().min(1, "Nhập tên hiển thị.").max(60, "Tên tối đa 60 ký tự.") }),
   async ({ displayName }, { user }) => {
     await getDb().update(users).set({ displayName }).where(eq(users.id, user.id));
@@ -30,7 +30,7 @@ const bankSchema = z
     path: ["bankAccountNumber"],
   });
 
-export const saveBankSettings = createAction({ module: "tutoring" }, bankSchema, async (input, { user }) => {
+export const saveBankSettings = createAction({ module: "tutoring", name: "saveBankSettings" }, bankSchema, async (input, { user }) => {
   if (!!input.bankBin !== !!input.bankAccountNumber) {
     throw new UserError("Chọn ngân hàng và nhập số tài khoản, hoặc để trống cả hai.");
   }
@@ -50,7 +50,7 @@ export const saveBankSettings = createAction({ module: "tutoring" }, bankSchema,
 });
 
 export const setTuitionAutoIncome = createAction(
-  { module: "tutoring" },
+  { module: "tutoring", name: "setTuitionAutoIncome" },
   z.object({ enabled: z.boolean() }),
   async ({ enabled }, { user }) => {
     await withTenant(user.id, async (tx) => {

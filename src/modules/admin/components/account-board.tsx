@@ -1,7 +1,8 @@
 "use client";
 
-import { CopyIcon, KeyIcon, LockIcon, LockOpenIcon, PencilSimpleIcon, PlusIcon, SpinnerIcon } from "@phosphor-icons/react";
+import { CopyIcon, EyeIcon, KeyIcon, LockIcon, LockOpenIcon, PencilSimpleIcon, PlusIcon, SpinnerIcon } from "@phosphor-icons/react";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Field } from "@/components/form/field";
@@ -16,14 +17,15 @@ import { MODULES, type ModuleKey } from "@/config/modules";
 import { copyText } from "@/lib/browser";
 import { formatDateTime } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
-import { createUser, resetPassword, setUserStatus, updateUser } from "../actions";
+import { createUser, resetPassword, setUserStatus, startViewAs, updateUser } from "../actions";
 import type { AccountView } from "../queries";
 
 export function AccountBoard({ accounts, currentUserId }: { accounts: AccountView[]; currentUserId: string }) {
   const [editor, setEditor] = useState<{ open: boolean; account: AccountView | null; key: number }>({ open: false, account: null, key: 0 });
   const [credentials, setCredentials] = useState<{ username: string; tempPassword: string } | null>(null);
-  const [confirm, setConfirm] = useState<{ kind: "reset" | "lock" | "unlock"; account: AccountView } | null>(null);
+  const [confirm, setConfirm] = useState<{ kind: "reset" | "lock" | "unlock" | "viewAs"; account: AccountView } | null>(null);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   const openEditor = (account: AccountView | null) => setEditor((e) => ({ open: true, account, key: e.key + 1 }));
 
@@ -31,7 +33,12 @@ export function AccountBoard({ accounts, currentUserId }: { accounts: AccountVie
     if (!confirm) return;
     const { kind, account } = confirm;
     startTransition(async () => {
-      if (kind === "reset") {
+      if (kind === "viewAs") {
+        const result = await startViewAs({ id: account.id });
+        if (!result.ok) return void toast.error(result.error);
+        toast.success(`Đang xem dữ liệu của @${result.data.username}`);
+        router.push("/");
+      } else if (kind === "reset") {
         const result = await resetPassword({ id: account.id });
         if (!result.ok) return void toast.error(result.error);
         setCredentials(result.data);
@@ -95,6 +102,9 @@ export function AccountBoard({ accounts, currentUserId }: { accounts: AccountVie
                 </Button>
                 {!self && (
                   <>
+                    <Button variant="outline" size="sm" disabled={pending || locked} onClick={() => setConfirm({ kind: "viewAs", account })}>
+                      <EyeIcon className="size-3.5" /> Mở dữ liệu
+                    </Button>
                     <Button variant="outline" size="sm" disabled={pending} onClick={() => setConfirm({ kind: "reset", account })}>
                       <KeyIcon className="size-3.5" /> Đặt lại mật khẩu
                     </Button>
@@ -128,22 +138,28 @@ export function AccountBoard({ accounts, currentUserId }: { accounts: AccountVie
       <ConfirmDialog
         open={confirm !== null}
         onOpenChange={(o) => !o && setConfirm(null)}
-        destructive={confirm?.kind !== "unlock"}
+        destructive={confirm?.kind === "reset" || confirm?.kind === "lock"}
         title={
-          confirm?.kind === "reset"
-            ? `Đặt lại mật khẩu cho @${confirm.account.username}?`
-            : confirm?.kind === "lock"
-              ? `Khóa @${confirm?.account.username}?`
-              : `Mở khóa @${confirm?.account.username}?`
+          confirm?.kind === "viewAs"
+            ? `Mở dữ liệu của @${confirm.account.username}?`
+            : confirm?.kind === "reset"
+              ? `Đặt lại mật khẩu cho @${confirm.account.username}?`
+              : confirm?.kind === "lock"
+                ? `Khóa @${confirm?.account.username}?`
+                : `Mở khóa @${confirm?.account.username}?`
         }
         description={
-          confirm?.kind === "reset"
-            ? "Người này bị đăng xuất khỏi mọi thiết bị và phải đặt mật khẩu mới ở lần đăng nhập tới."
-            : confirm?.kind === "lock"
-              ? "Người này bị đăng xuất ngay và không đăng nhập được nữa. Link phụ huynh của họ cũng ngừng hoạt động. Dữ liệu vẫn được giữ."
-              : "Người này đăng nhập lại được bằng mật khẩu hiện tại."
+          confirm?.kind === "viewAs"
+            ? "Bạn sẽ xem và sửa được toàn bộ dữ liệu của tài khoản này trong 4 giờ. Mọi thay đổi đều được ghi vào nhật ký."
+            : confirm?.kind === "reset"
+              ? "Người này bị đăng xuất khỏi mọi thiết bị và phải đặt mật khẩu mới ở lần đăng nhập tới."
+              : confirm?.kind === "lock"
+                ? "Người này bị đăng xuất ngay và không đăng nhập được nữa. Link phụ huynh của họ cũng ngừng hoạt động. Dữ liệu vẫn được giữ."
+                : "Người này đăng nhập lại được bằng mật khẩu hiện tại."
         }
-        confirmLabel={confirm?.kind === "reset" ? "Đặt lại" : confirm?.kind === "lock" ? "Khóa" : "Mở khóa"}
+        confirmLabel={
+          confirm?.kind === "viewAs" ? "Mở dữ liệu" : confirm?.kind === "reset" ? "Đặt lại" : confirm?.kind === "lock" ? "Khóa" : "Mở khóa"
+        }
         onConfirm={runConfirm}
       />
 

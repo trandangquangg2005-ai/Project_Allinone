@@ -57,8 +57,12 @@ export async function privateFileResponse(
   request: Request,
   contentType = "image/jpeg",
 ): Promise<Response> {
+  // A photo id is never reused, so the bytes behind this URL never change:
+  // the browser may keep it for good. That matters on the free tiers — every
+  // re-fetch would otherwise cost a Blob read, a function call and egress.
+  // `private` keeps it out of shared caches; only this browser holds a copy.
   const headers = {
-    "Cache-Control": "private, no-cache",
+    "Cache-Control": "private, max-age=31536000, immutable",
     "X-Content-Type-Options": "nosniff",
   };
 

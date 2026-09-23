@@ -1,8 +1,9 @@
 import "server-only";
-import { asc, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import { isModuleKey, type ModuleKey } from "@/config/modules";
 import { getDb } from "@/db";
-import { users } from "@/db/schema";
+import { auditLog, users } from "@/db/schema";
 
 export type AccountView = {
   id: string;
@@ -33,4 +34,33 @@ export async function listAccounts(): Promise<AccountView[]> {
     .from(users)
     .orderBy(sql`${users.status} = 'disabled'`, asc(users.createdAt));
   return rows.map((r) => ({ ...r, modules: r.modules.filter(isModuleKey) }));
+}
+
+export type AuditEntry = {
+  id: string;
+  action: string;
+  detail: Record<string, unknown> | null;
+  createdAt: Date;
+  actorName: string;
+  targetName: string;
+};
+
+/** Newest first; the admin screen shows the most recent page only. */
+export async function listAudit(limit = 60): Promise<AuditEntry[]> {
+  const actor = alias(users, "actor");
+  const target = alias(users, "target");
+  return getDb()
+    .select({
+      id: auditLog.id,
+      action: auditLog.action,
+      detail: auditLog.detail,
+      createdAt: auditLog.createdAt,
+      actorName: actor.username,
+      targetName: target.username,
+    })
+    .from(auditLog)
+    .innerJoin(actor, eq(actor.id, auditLog.actorUserId))
+    .innerJoin(target, eq(target.id, auditLog.targetUserId))
+    .orderBy(desc(auditLog.createdAt))
+    .limit(limit);
 }

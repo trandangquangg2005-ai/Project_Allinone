@@ -9,7 +9,7 @@ import { createAction, UserError } from "@/lib/action";
 import { requireUser } from "@/lib/auth/dal";
 import { burnPasswordCheck, hashPassword, verifyPassword } from "@/lib/auth/password";
 import { attemptKeys, clearFailures, lockedUntil, recordFailure } from "@/lib/auth/rate-limit";
-import { SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/auth/session";
+import { SESSION_COOKIE, sessionCookieOptions, signSession, VIEW_AS_COOKIE } from "@/lib/auth/session";
 import { formatTime } from "@/lib/datetime";
 import { changePasswordSchema, usernameSchema } from "./schemas";
 
@@ -27,7 +27,9 @@ async function clientIp(): Promise<string | null> {
 }
 
 async function setSessionCookie(userId: string, sessionVersion: number) {
-  (await cookies()).set(SESSION_COOKIE, await signSession(userId, sessionVersion), sessionCookieOptions());
+  const store = await cookies();
+  store.set(SESSION_COOKIE, await signSession(userId, sessionVersion), sessionCookieOptions());
+  store.delete(VIEW_AS_COOKIE);
 }
 
 export async function login(_previous: LoginState, form: FormData): Promise<LoginState> {
@@ -76,12 +78,14 @@ export async function login(_previous: LoginState, form: FormData): Promise<Logi
 }
 
 export async function logout() {
-  (await cookies()).delete(SESSION_COOKIE);
+  const store = await cookies();
+  store.delete(SESSION_COOKIE);
+  store.delete(VIEW_AS_COOKIE);
   redirect("/login");
 }
 
 export const changePassword = createAction(
-  { allowPasswordChange: true },
+  { allowPasswordChange: true, name: "changePassword" },
   changePasswordSchema,
   async (input, { user }) => {
     const db = getDb();

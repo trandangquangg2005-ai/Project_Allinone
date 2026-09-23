@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { generateTempPassword, hashPassword, verifyPassword } from "@/lib/auth/password";
-import { signSession, verifySession } from "@/lib/auth/session";
+import { signSession, signViewAs, verifySession, verifyViewAs } from "@/lib/auth/session";
 import { decryptText, encryptText, randomToken, sha256 } from "@/lib/crypto";
 
 beforeAll(() => {
@@ -32,6 +32,21 @@ describe("sessions", () => {
     const [header, body, signature] = token.split(".");
     expect(await verifySession(`${header}.${body}.${signature.slice(0, -2)}xx`)).toBeNull();
     expect(await verifySession(undefined)).toBeNull();
+  });
+
+  it("carries both accounts in a view-as ticket and rejects tampering", async () => {
+    const admin = "11111111-1111-4111-8111-111111111111";
+    const target = "22222222-2222-4222-8222-222222222222";
+    const token = await signViewAs(admin, target);
+    const claims = await verifyViewAs(token);
+    // The admin id travels inside the signature: the DAL refuses the ticket
+    // unless it matches the session it arrived with, so a stolen or swapped
+    // cookie cannot open someone else's account.
+    expect(claims).toEqual({ adm: admin, sub: target });
+    const [header, body, signature] = token.split(".");
+    expect(await verifyViewAs(`${header}.${body}.${signature.slice(0, -2)}xx`)).toBeNull();
+    expect(await verifyViewAs(await signSession(target, 1))).toBeNull(); // a session token is not a ticket
+    expect(await verifyViewAs(undefined)).toBeNull();
   });
 });
 

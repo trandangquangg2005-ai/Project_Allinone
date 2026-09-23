@@ -5,7 +5,12 @@ import * as schema from "./schema";
 
 // Framework-free pieces shared by the app, scripts and tests.
 
-export function createPool(connectionString: string | undefined, max = 10) {
+/**
+ * `max` is deliberately small: on Vercel every function instance keeps its own
+ * pool, and Neon's smallest compute only offers ~90 pooled connections. Three
+ * is plenty for one person's traffic and leaves room for parallel instances.
+ */
+export function createPool(connectionString: string | undefined, max = 3) {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set (see .env.example)");
   }

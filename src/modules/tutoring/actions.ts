@@ -84,7 +84,7 @@ function cleanupLater(pathnames: string[]) {
 
 // -------------------------------------------------------------------- students
 
-export const saveStudent = createAction(guard, studentSchema, async ({ id, ...values }, { user }) => {
+export const saveStudent = createAction({ ...guard, name: "saveStudent" }, studentSchema, async ({ id, ...values }, { user }) => {
   await withTenant(user.id, async (tx) => {
     if (id) {
       const updated = await tx
@@ -101,7 +101,7 @@ export const saveStudent = createAction(guard, studentSchema, async ({ id, ...va
   return null;
 });
 
-export const archiveStudent = createAction(guard, archiveStudentSchema, async ({ id, archived }, { user }) => {
+export const archiveStudent = createAction({ ...guard, name: "archiveStudent" }, archiveStudentSchema, async ({ id, archived }, { user }) => {
   await withTenant(user.id, async (tx) => {
     await tx
       .update(students)
@@ -121,11 +121,18 @@ export const archiveStudent = createAction(guard, archiveStudentSchema, async ({
 
 // ------------------------------------------------------------------ check-in/out
 
-export const checkIn = createFormAction(guard, async (form, { user }) => {
+export const checkIn = createFormAction({ ...guard, name: "checkIn" }, async (form, { user }) => {
   const input = checkInFields.parse(fields(form));
   const photo = await readPhoto(form);
-  const uploaded: string[] = [];
+  // Uploaded before the transaction opens: a transaction left open across a
+  // network call holds a pooled connection and keeps the database billed as
+  // active. An orphan file is cheap to drop; a stuck connection is not.
+  const photoId = randomUUID();
+  const pathname = `u/${user.id}/photos/${photoId}.${photo.extension}`;
+  await putPrivateFile(pathname, photo.data, photo.contentType);
+  const uploaded = [pathname];
   try {
+    let reused = false;
     const lessonId = await withTenant(user.id, async (tx) => {
       // A retry of the same tap returns the lesson it already created.
       const [existing] = await tx
@@ -133,7 +140,10 @@ export const checkIn = createFormAction(guard, async (form, { user }) => {
         .from(lessons)
         .where(and(eq(lessons.userId, user.id), eq(lessons.clientRequestId, input.clientRequestId)))
         .limit(1);
-      if (existing) return existing.id;
+      if (existing) {
+        reused = true;
+        return existing.id;
+      }
 
       const student = await assertStudent(tx, user.id, input.studentId);
       if (student.archivedAt) throw new UserError("Học sinh này đã nghỉ học. Hãy mở lại trước khi check-in.");
@@ -153,10 +163,6 @@ export const checkIn = createFormAction(guard, async (form, { user }) => {
         })
         .returning({ id: lessons.id });
 
-      const photoId = randomUUID();
-      const pathname = `u/${user.id}/lessons/${lesson.id}/check-in-${photoId}.${photo.extension}`;
-      await putPrivateFile(pathname, photo.data, photo.contentType);
-      uploaded.push(pathname);
       await tx.insert(lessonPhotos).values({
         id: photoId,
         userId: user.id,
@@ -169,6 +175,7 @@ export const checkIn = createFormAction(guard, async (form, { user }) => {
       });
       return lesson.id;
     });
+    if (reused) cleanupLater(uploaded); // the first tap already stored its photo
     refresh();
     return { lessonId };
   } catch (error) {
@@ -177,10 +184,13 @@ export const checkIn = createFormAction(guard, async (form, { user }) => {
   }
 });
 
-export const checkOut = createFormAction(guard, async (form, { user }) => {
+export const checkOut = createFormAction({ ...guard, name: "checkOut" }, async (form, { user }) => {
   const input = checkOutFields.parse(fields(form));
   const photo = await readPhoto(form);
-  const uploaded: string[] = [];
+  const photoId = randomUUID();
+  const pathname = `u/${user.id}/photos/${photoId}.${photo.extension}`;
+  await putPrivateFile(pathname, photo.data, photo.contentType);
+  const uploaded = [pathname];
   try {
     await withTenant(user.id, async (tx) => {
       const [lesson] = await tx
@@ -191,10 +201,6 @@ export const checkOut = createFormAction(guard, async (form, { user }) => {
       if (!lesson) throw new UserError("Không tìm thấy buổi dạy.");
       if (lesson.status !== "in_progress") throw new UserError("Buổi này đã check-out rồi.");
 
-      const photoId = randomUUID();
-      const pathname = `u/${user.id}/lessons/${lesson.id}/check-out-${photoId}.${photo.extension}`;
-      await putPrivateFile(pathname, photo.data, photo.contentType);
-      uploaded.push(pathname);
       await tx.insert(lessonPhotos).values({
         id: photoId,
         userId: user.id,
@@ -227,7 +233,7 @@ export const checkOut = createFormAction(guard, async (form, { user }) => {
 
 // ----------------------------------------------------------------- lesson edits
 
-export const addManualLesson = createAction(guard, manualLessonSchema, async (input, { user }) => {
+export const addManualLesson = createAction({ ...guard, name: "addManualLesson" }, manualLessonSchema, async (input, { user }) => {
   await withTenant(user.id, async (tx) => {
     const student = await assertStudent(tx, user.id, input.studentId);
     await tx.insert(lessons).values({
@@ -246,7 +252,7 @@ export const addManualLesson = createAction(guard, manualLessonSchema, async (in
   return null;
 });
 
-export const updateLesson = createAction(guard, updateLessonSchema, async (input, { user }) => {
+export const updateLesson = createAction({ ...guard, name: "updateLesson" }, updateLessonSchema, async (input, { user }) => {
   await withTenant(user.id, async (tx) => {
     const [lesson] = await tx
       .select({ status: lessons.status, checkInAt: lessons.checkInAt, checkOutAt: lessons.checkOutAt, fee: lessons.fee })
@@ -282,7 +288,7 @@ export const updateLesson = createAction(guard, updateLessonSchema, async (input
   return null;
 });
 
-export const deleteLesson = createAction(guard, lessonIdSchema, async ({ id }, { user }) => {
+export const deleteLesson = createAction({ ...guard, name: "deleteLesson" }, lessonIdSchema, async ({ id }, { user }) => {
   const pathnames = await withTenant(user.id, async (tx) => {
     const paths = await photoPathsForLessons(tx, user.id, [id]);
     const deleted = await tx
@@ -299,7 +305,7 @@ export const deleteLesson = createAction(guard, lessonIdSchema, async ({ id }, {
 
 // --------------------------------------------------------------------- payments
 
-export const recordPayment = createAction(guard, paymentSchema, async (input, { user }) => {
+export const recordPayment = createAction({ ...guard, name: "recordPayment" }, paymentSchema, async (input, { user }) => {
   await withTenant(user.id, async (tx) => {
     const student = await assertStudent(tx, user.id, input.studentId);
     const settings = await getBankSettings(tx, user.id);
@@ -345,7 +351,7 @@ export const recordPayment = createAction(guard, paymentSchema, async (input, { 
   return null;
 });
 
-export const deletePayment = createAction(guard, lessonIdSchema, async ({ id }, { user }) => {
+export const deletePayment = createAction({ ...guard, name: "deletePayment" }, lessonIdSchema, async ({ id }, { user }) => {
   await withTenant(user.id, async (tx) => {
     const [payment] = await tx
       .delete(tuitionPayments)
@@ -365,7 +371,7 @@ export const deletePayment = createAction(guard, lessonIdSchema, async ({ id }, 
 // ------------------------------------------------------------------ parent links
 
 /** Creates the student's parent link, revoking any previous one. */
-export const regenerateShareLink = createAction(guard, studentIdSchema, async ({ studentId }, { user }) => {
+export const regenerateShareLink = createAction({ ...guard, name: "regenerateShareLink" }, studentIdSchema, async ({ studentId }, { user }) => {
   const token = randomToken(32);
   await withTenant(user.id, async (tx) => {
     const student = await assertStudent(tx, user.id, studentId);
@@ -385,7 +391,7 @@ export const regenerateShareLink = createAction(guard, studentIdSchema, async ({
   return { token };
 });
 
-export const revokeShareLink = createAction(guard, studentIdSchema, async ({ studentId }, { user }) => {
+export const revokeShareLink = createAction({ ...guard, name: "revokeShareLink" }, studentIdSchema, async ({ studentId }, { user }) => {
   await withTenant(user.id, async (tx) => {
     await tx
       .update(shareLinks)

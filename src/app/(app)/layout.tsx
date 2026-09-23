@@ -6,6 +6,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <AppShell
       user={{ displayName: user.displayName, username: user.username, role: user.role, modules: user.modules }}
+      viewingAs={user.actor ? { username: user.username, adminName: user.actor.username } : null}
     >
       {children}
     </AppShell>

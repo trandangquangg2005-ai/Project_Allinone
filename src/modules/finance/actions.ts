@@ -40,7 +40,7 @@ async function assertWallets(tx: Tx, userId: string, ids: string[]) {
 
 // ---------------------------------------------------------------- transactions
 
-export const saveTransaction = createAction(guard, transactionSchema, async (input, { user }) => {
+export const saveTransaction = createAction({ ...guard, name: "saveTransaction" }, transactionSchema, async (input, { user }) => {
   await withTenant(user.id, async (tx) => {
     await assertWallets(tx, user.id, [input.walletId, ...(input.kind === "transfer" && input.toWalletId ? [input.toWalletId] : [])]);
     if (input.kind !== "transfer") {
@@ -82,7 +82,7 @@ export const saveTransaction = createAction(guard, transactionSchema, async (inp
   return null;
 });
 
-export const deleteTransaction = createAction(guard, deleteSchema, async ({ id }, { user }) => {
+export const deleteTransaction = createAction({ ...guard, name: "deleteTransaction" }, deleteSchema, async ({ id }, { user }) => {
   await withTenant(user.id, async (tx) => {
     const [existing] = await tx
       .select({ source: transactions.source })
@@ -99,7 +99,7 @@ export const deleteTransaction = createAction(guard, deleteSchema, async ({ id }
 
 // --------------------------------------------------------------------- wallets
 
-export const saveWallet = createAction(guard, walletSchema, async (input, { user }) => {
+export const saveWallet = createAction({ ...guard, name: "saveWallet" }, walletSchema, async (input, { user }) => {
   await withTenant(user.id, async (tx) => {
     const values = { name: input.name, kind: input.kind, openingBalance: input.openingBalance, color: input.color };
     if (input.id) {
@@ -121,7 +121,7 @@ export const saveWallet = createAction(guard, walletSchema, async (input, { user
   return null;
 });
 
-export const archiveWallet = createAction(guard, archiveSchema, async ({ id, archived }, { user }) => {
+export const archiveWallet = createAction({ ...guard, name: "archiveWallet" }, archiveSchema, async ({ id, archived }, { user }) => {
   await withTenant(user.id, async (tx) => {
     if (archived) {
       const [{ n }] = await tx
@@ -139,7 +139,7 @@ export const archiveWallet = createAction(guard, archiveSchema, async ({ id, arc
   return null;
 });
 
-export const deleteWallet = createAction(guard, deleteSchema, async ({ id }, { user }) => {
+export const deleteWallet = createAction({ ...guard, name: "deleteWallet" }, deleteSchema, async ({ id }, { user }) => {
   await withTenant(user.id, async (tx) => {
     if ((await transactionCountForWallet(tx, user.id, id)) > 0) {
       throw new UserError("Ví này đã có giao dịch nên không xóa được. Hãy ẩn ví thay vì xóa.");
@@ -157,7 +157,7 @@ export const deleteWallet = createAction(guard, deleteSchema, async ({ id }, { u
 
 // ------------------------------------------------------------------ categories
 
-export const saveCategory = createAction(guard, categorySchema, async (input, { user }) => {
+export const saveCategory = createAction({ ...guard, name: "saveCategory" }, categorySchema, async (input, { user }) => {
   await withTenant(user.id, async (tx) => {
     const values = { kind: input.kind, name: input.name, icon: input.icon, color: input.color };
     if (input.id) {
@@ -191,7 +191,7 @@ export const saveCategory = createAction(guard, categorySchema, async (input, { 
   return null;
 });
 
-export const archiveCategory = createAction(guard, archiveSchema, async ({ id, archived }, { user }) => {
+export const archiveCategory = createAction({ ...guard, name: "archiveCategory" }, archiveSchema, async ({ id, archived }, { user }) => {
   await withTenant(user.id, async (tx) => {
     await tx
       .update(categories)
@@ -210,7 +210,7 @@ function debtMovement(direction: "lent" | "borrowed", phase: "open" | "repay") {
   return outgoing ? ("expense" as const) : ("income" as const);
 }
 
-export const saveDebt = createAction(guard, debtSchema, async (input, { user }) => {
+export const saveDebt = createAction({ ...guard, name: "saveDebt" }, debtSchema, async (input, { user }) => {
   await withTenant(user.id, async (tx) => {
     const values = {
       direction: input.direction,
@@ -283,7 +283,7 @@ export const saveDebt = createAction(guard, debtSchema, async (input, { user }) 
   return null;
 });
 
-export const addDebtPayment = createAction(guard, debtPaymentSchema, async (input, { user }) => {
+export const addDebtPayment = createAction({ ...guard, name: "addDebtPayment" }, debtPaymentSchema, async (input, { user }) => {
   await withTenant(user.id, async (tx) => {
     const debt = await getDebt(tx, user.id, input.debtId);
     if (!debt) throw new UserError("Không tìm thấy khoản nợ.");
@@ -330,7 +330,7 @@ export const addDebtPayment = createAction(guard, debtPaymentSchema, async (inpu
   return null;
 });
 
-export const deleteDebtPayment = createAction(guard, deleteSchema, async ({ id }, { user }) => {
+export const deleteDebtPayment = createAction({ ...guard, name: "deleteDebtPayment" }, deleteSchema, async ({ id }, { user }) => {
   await withTenant(user.id, async (tx) => {
     const [payment] = await tx
       .delete(debtPayments)
@@ -355,7 +355,7 @@ export const deleteDebtPayment = createAction(guard, deleteSchema, async ({ id }
   return null;
 });
 
-export const deleteDebt = createAction(guard, deleteSchema, async ({ id }, { user }) => {
+export const deleteDebt = createAction({ ...guard, name: "deleteDebt" }, deleteSchema, async ({ id }, { user }) => {
   await withTenant(user.id, async (tx) => {
     const [debt] = await tx
       .select({ transactionId: debts.transactionId })
@@ -379,7 +379,7 @@ export const deleteDebt = createAction(guard, deleteSchema, async ({ id }, { use
   return null;
 });
 
-export const setDebtSettled = createAction(guard, settleSchema, async ({ id, settled }, { user }) => {
+export const setDebtSettled = createAction({ ...guard, name: "setDebtSettled" }, settleSchema, async ({ id, settled }, { user }) => {
   await withTenant(user.id, async (tx) => {
     const debt = await getDebt(tx, user.id, id);
     if (!debt) throw new UserError("Không tìm thấy khoản nợ.");

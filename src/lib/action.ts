@@ -3,6 +3,7 @@ import { unstable_rethrow } from "next/navigation";
 import { ZodError, type z } from "zod";
 import type { ModuleKey } from "@/config/modules";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/dal";
+import { recordAudit, summarize } from "@/lib/audit";
 import { friendlyDbError } from "@/lib/db-errors";
 
 import type { ActionResult } from "./action-result";
@@ -12,7 +13,19 @@ export type { ActionResult };
 /** Throw inside an action to show `message` to the user as-is. */
 export class UserError extends Error {}
 
-type Guard = { module?: ModuleKey; admin?: boolean; allowPasswordChange?: boolean };
+type Guard = {
+  module?: ModuleKey;
+  admin?: boolean;
+  allowPasswordChange?: boolean;
+  /** Written to the audit log when an admin runs this inside another account. */
+  name?: string;
+};
+
+/** Only writes made from inside someone else's account are logged. */
+async function audit(user: CurrentUser, guard: Guard, detail: Record<string, unknown> | null) {
+  if (!user.actor) return;
+  await recordAudit({ actorId: user.actor.id, targetId: user.id, action: guard.name ?? "action", detail });
+}
 
 async function authorize(guard: Guard): Promise<CurrentUser | string> {
   const user = await getCurrentUser();
@@ -58,7 +71,9 @@ export function createAction<S extends z.ZodType, R>(
     }
 
     try {
-      return { ok: true, data: await handler(parsed.data, { user }) };
+      const data = await handler(parsed.data, { user });
+      await audit(user, guard, summarize(parsed.data));
+      return { ok: true, data };
     } catch (error) {
       return toFailure(error);
     }
@@ -74,7 +89,10 @@ export function createFormAction<R>(
     const user = await authorize(guard);
     if (typeof user === "string") return { ok: false, error: user };
     try {
-      return { ok: true, data: await handler(form, { user }) };
+      const data = await handler(form, { user });
+      const fields = Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string"));
+      await audit(user, guard, summarize(fields));
+      return { ok: true, data };
     } catch (error) {
       return toFailure(error);
     }

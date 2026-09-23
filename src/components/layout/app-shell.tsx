@@ -4,8 +4,18 @@ import { BottomNav } from "./bottom-nav";
 import { buildNav, type NavUser } from "./nav-items";
 import { SidebarNav } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";
+import { ViewAsBanner } from "./view-as-banner";
 
-export function AppShell({ user, children }: { user: NavUser; children: React.ReactNode }) {
+export function AppShell({
+  user,
+  viewingAs,
+  children,
+}: {
+  user: NavUser;
+  /** Set when an admin opened someone else's account. */
+  viewingAs: { username: string; adminName: string } | null;
+  children: React.ReactNode;
+}) {
   const nav = buildNav(user);
   const sidebarGroups = [nav.primary, [...(nav.admin ? [nav.admin] : []), nav.settings]];
 
@@ -30,6 +40,7 @@ export function AppShell({ user, children }: { user: NavUser; children: React.Re
           </Link>
           <UserMenu user={user} variant="compact" />
         </header>
+        {viewingAs && <ViewAsBanner username={viewingAs.username} adminName={viewingAs.adminName} />}
         <main className="mx-auto w-full max-w-6xl px-4 pt-5 pb-28 sm:px-6 lg:px-10 lg:pt-10 lg:pb-16">{children}</main>
       </div>
 
